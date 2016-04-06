@@ -10,7 +10,9 @@ typedef struct Arguments{
 } Arguments;
 
 typedef struct Frame{
-	int framelength;
+	int height;
+	int width;
+	unsigned char *framedata;
 } Frame;
 
 typedef struct Header{
