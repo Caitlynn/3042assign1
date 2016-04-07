@@ -5,7 +5,7 @@ obj=$(src:.c=.o)
 
 all: $(program)
 
-debug: $(eval flag := -g -Wall) $(program)
+debug: $(eval flags := -g -Wall) $(program)
 
 $(program): $(obj)
 	gcc -o $@ $^
@@ -18,4 +18,3 @@ $(program): $(obj)
 
 clean:
 	@find src/ -type f -name '*.o' -delete
-	

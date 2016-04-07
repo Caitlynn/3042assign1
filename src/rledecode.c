@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-/* this program decodes an rleplay file and prodcus a sequence of images in PPM format
+/* this program decodes an rleplay file and produce a sequence of images in PPM format
 */ 
 
 
@@ -23,8 +23,9 @@ int headerDecode(FILE *rleFile, Header *header){
 			return false;
 		}
 	}
-
+	//handle incorrect width and height
 	if (header->width < 1 || header->height < 1){
+		fprintf(stderr, "the width and height values are incorrect\n", );
 		return false;
 	}
 	return true;
@@ -32,6 +33,9 @@ int headerDecode(FILE *rleFile, Header *header){
 
 int packbitDecode(FILE *file, Frame *frame){
 	char seperator = fgetc(file);
+	if (seperator == 'E' || (int)seperator == EOF) {
+		return false; // there are no more frames to decode
+	}
 	if (seperator != 'K') {
 		fprintf(stderr, "the frame data didn't start with 'K'\n");
 		return false;
@@ -41,6 +45,11 @@ int packbitDecode(FILE *file, Frame *frame){
 	size_t i = 0;
 	while (i < size) {
 		int blockheader = fgetc(file);
+		if (blockheader == EOF) {
+			fprintf(stderr, "unexpected eof\n");
+			return false;
+		}
+		blockheader = (char)blockheader;
 		if (blockheader < 0) {
 			// if the header is negative
 			unsigned char symbol = fgetc(file);
@@ -59,17 +68,22 @@ int packbitDecode(FILE *file, Frame *frame){
 	return true;
 }
 
-
-// scale an image using blinear interpolation
-void scaleImage(char *scaleRange,char *images){
-
+int writeFile(Frame *frame, FILE *framefile){
+	fprintf(framefile, "P6\n%d %d\n255\n", frame->width, frame->height);
+	int pixels = frame->width * frame->height;
+	for(size_t i=0; i<pixels; i++){
+		size_t offset = pixels;
+		char pixel[3] = {
+			frame->framedata[i],
+			frame->framedata[i+offset],
+			frame->framedata[i+2*offset]
+		};
+		if(fwrite(pixel, sizeof(char), 3, framefile) != 3) {
+			return false;
+		}
+	}
+	return true;	 	
 }
-
-//add a frame between each frame
-void addFrame(char *frameNo){
-
-}
-
 
 
 int main(int argc, char *argv[]){
@@ -91,21 +105,26 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
+	Frame frame = {
+		.height = rleFileHeader.height,
+		.width = rleFileHeader.width,
+		.framedata = NULL
+	};
 
+	int decoderesult = 0;
+	int filecount = 0;
+	while((decoderesult = packbitDecode(rleFile, &frame)) != 0){
+		char *filename = malloc(sizeof(char) * (4+4)); //NOTE modify for prefix
+		sprintf(filename, "%04d.ppm", filecount); // generate filename 
+		FILE *outputfile = fopen(filename, "wb"); //write to output file
+		writeFile(&frame, outputfile);
+		free(filename);
+		free(frame.framedata);
+		filecount++;
+	}
 
 	fclose(rleFile);
-	if (strncmp(argv[2], "-", 1) == 0) {
-		//each output file should be named 'prefix-xxxx.ppm', 'prefix' is the input
-		//'xxxx' is a 4 digit integer indicating which frame it is
-		
-		return 0;
-	} else if(strncmp(argv[3], "--scale", 7) == 0){
-		
-	} else if(strncmp(argv[3], "--tween", 7) == 0){
-		
-	} else {
-		
-	}
+
 	return 0;
 }
 

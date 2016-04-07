@@ -4,8 +4,8 @@
 typedef struct Arguments{
 	char *video;
 	char *prefix;
-	int *scaleNumber;
-	int *tweenFrame;
+	int scaleNumber;
+	int tweenFrame;
 
 } Arguments;
 
