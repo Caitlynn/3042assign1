@@ -25,13 +25,14 @@ int headerDecode(FILE *rleFile, Header *header){
 	}
 	//handle incorrect width and height
 	if (header->width < 1 || header->height < 1){
-		fprintf(stderr, "the width and height values are incorrect\n", );
+		fprintf(stderr, "the width and height values are incorrect\n");
 		return false;
 	}
 	return true;
 }
 
 int packbitDecode(FILE *file, Frame *frame){
+	// get the first element of the file and check it's the end of the file or 'K'
 	char seperator = fgetc(file);
 	if (seperator == 'E' || (int)seperator == EOF) {
 		return false; // there are no more frames to decode
@@ -40,6 +41,7 @@ int packbitDecode(FILE *file, Frame *frame){
 		fprintf(stderr, "the frame data didn't start with 'K'\n");
 		return false;
 	}
+	//calculate the data size
 	size_t size = frame->height * frame->width * 3;
 	frame->framedata = malloc(sizeof(unsigned char) * size);
 	size_t i = 0;
@@ -49,6 +51,8 @@ int packbitDecode(FILE *file, Frame *frame){
 			fprintf(stderr, "unexpected eof\n");
 			return false;
 		}
+		
+		//change the integer(2 bytes) to a char (one byte)
 		blockheader = (char)blockheader;
 		if (blockheader < 0) {
 			// if the header is negative
@@ -87,12 +91,45 @@ int writeFile(Frame *frame, FILE *framefile){
 
 
 int main(int argc, char *argv[]){
+	//validate arguments numbers
+	if (argc < 3 || argc > 7){
+		fprintf(stderr, "Please enter correct arugments\n");
+		return false;
+	}
 
+	Arguments args = {
+		.video = argv[1],
+		.scaleNumber = 0,
+		.tweenFrame = 0
+	};
+
+	if(strncmp(argv[2],"-",1) ==0){
+		args.prefix = NULL;
+	} else {
+		args.prefix = argv[2];
+	}
+
+	// const struct option long_options[]{
+	// 	{"scale", 1, NULL,'s'},
+	// 	{"tween", 1, NULL,'t'}
+	// };
+	// int indexptr;
+	// //loop through the arguments
+	// while((option = getopt_long(argc, argv, "s:t:", long_options, &indexptr)) != -1){
+	// 	switch(option){
+	// 		//do this cases only if you need it
+	// 		case 's':
+	// 			args.scaleNumber = atoi(optarg);
+
+	// 		case 't':
+	// 			args.tweenFrame = atoi(optarg);
+	// 	}
+	// }
 	FILE *rleFile = fopen(argv[1], "r");
 
 	if(rleFile == NULL){
 		fprintf(stderr, "the file doesnt exist.");
-		return 1;
+		return false;
 	}
 
 	Header rleFileHeader = {
@@ -114,13 +151,20 @@ int main(int argc, char *argv[]){
 	int decoderesult = 0;
 	int filecount = 0;
 	while((decoderesult = packbitDecode(rleFile, &frame)) != 0){
-		char *filename = malloc(sizeof(char) * (4+4)); //NOTE modify for prefix
-		sprintf(filename, "%04d.ppm", filecount); // generate filename 
-		FILE *outputfile = fopen(filename, "wb"); //write to output file
-		writeFile(&frame, outputfile);
-		free(filename);
-		free(frame.framedata);
-		filecount++;
+		if (args.prefix == NULL) {
+			writeFile(&frame, stdout);
+			fprintf(stdout, "%d", -1);
+		} else {
+			//allocate the momery of '-0000.ppm' and name of the prefix
+			char *filename = malloc(sizeof(char) * (4+4+1+strlen(args.prefix))); 
+			sprintf(filename, "%s-%04d.ppm",args.prefix, filecount); // generate filename 
+			FILE *outputfile = fopen(filename, "wb"); //write to output file
+			writeFile(&frame, outputfile);
+			free(filename);
+			free(frame.framedata);
+			filecount++;
+		}
+
 	}
 
 	fclose(rleFile);
