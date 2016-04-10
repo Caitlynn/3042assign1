@@ -5,7 +5,7 @@
 * Tweening
 * Scaling (hardest so leave until last)
 
-* Tian Zhou 25224921
+* Tian Zhou
 * how to compile and run the program
 * what functonality is and is not supported
 * and any known bugs or limitations
