@@ -1,6 +1,6 @@
 #include "rledecode.h"
+#include "arguments/arguments.h"
 #include <stdbool.h>
-#include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -72,6 +72,34 @@ int packbitDecode(FILE *file, Frame *frame){
 	return true;
 }
 
+Frame** tweenFrame(Frame *frame1, Frame *frame2, int tweenfactor){
+	int pixels = frame1->width * frame1->height;
+	Frame **newframes = malloc(sizeof(Frame *) * tweenfactor); // create a list of frame pointers
+	for(int j = 0; j< tweenfactor; j++){
+		Frame *tFrame = malloc(sizeof(Frame));
+		tFrame->width = frame1->width;
+		tFrame->height = frame1->height;
+		tFrame->framedata = malloc(sizeof(char) * pixels * 3);
+		newframes[j] = tFrame;
+		for(size_t i=0; i<pixels; i++){
+			tFrame->framedata[i] = frame1->framedata[i] - ((int)frame1->framedata[i] - (int)frame2->framedata[i]) / (tweenfactor+1) * (j+1);
+			tFrame->framedata[i+pixels] = frame1->framedata[i+pixels] - ((int)frame1->framedata[i+pixels] - (int)frame2->framedata[i+pixels]) / (tweenfactor+1) * (j+1);
+			tFrame->framedata[i+2*pixels] = frame1->framedata[i+2*pixels] - ((int)frame1->framedata[i+2*pixels] - (int)frame2->framedata[i+2*pixels]) / (tweenfactor+1) * (j+1);
+		}
+
+	}
+	return newframes;
+}
+
+// int scaleImage(FILE *file, int scalefactor){
+// 	if (fsanf(file, "P6\n%d %d\n255\n", width, height) != 2) {
+// 		fprintf(stderr, "This is not a PPM file\n");
+// 	}
+
+
+// }
+
+/*write a frame to a file*/
 int writeFile(Frame *frame, FILE *framefile){
 	fprintf(framefile, "P6\n%d %d\n255\n", frame->width, frame->height);
 	int pixels = frame->width * frame->height;
@@ -90,43 +118,36 @@ int writeFile(Frame *frame, FILE *framefile){
 }
 
 
+
+void writeToFile(int filecount, char *prefix, Frame *frame){
+	if (prefix == NULL) {
+			writeFile(frame, stdout);
+			fprintf(stdout, "%d", -1);
+		} else {
+			char *filename = malloc(sizeof(char) * (4+4+1+strlen(prefix))); 	//allocate the momery of '-0000.ppm' and name of the prefix
+			sprintf(filename, "%s-%04d.ppm", prefix, filecount); // generate filename 
+			FILE *outputfile = fopen(filename, "wb"); //write to output file
+			writeFile(frame, outputfile);
+			fclose(outputfile);
+			free(filename);
+			//try to use the function so it can also write tween frames
+			filecount++;
+		}
+}
+
+
 int main(int argc, char *argv[]){
 	//validate arguments numbers
-	if (argc < 3 || argc > 7){
-		fprintf(stderr, "Please enter correct arugments\n");
-		return false;
-	}
-
 	Arguments args = {
-		.video = argv[1],
-		.scaleNumber = 0,
-		.tweenFrame = 0
+		.video = NULL,
+		.scalefactor = 0,
+		.tweenfactor = 0
 	};
-
-	if(strncmp(argv[2],"-",1) ==0){
-		args.prefix = NULL;
-	} else {
-		args.prefix = argv[2];
+	if (!validateArguments(&args, argc, argv)) { // pass in the program arguments and fillout the Arguments struct
+		return 1;
 	}
 
-	// const struct option long_options[]{
-	// 	{"scale", 1, NULL,'s'},
-	// 	{"tween", 1, NULL,'t'}
-	// };
-	// int indexptr;
-	// //loop through the arguments
-	// while((option = getopt_long(argc, argv, "s:t:", long_options, &indexptr)) != -1){
-	// 	switch(option){
-	// 		//do this cases only if you need it
-	// 		case 's':
-	// 			args.scaleNumber = atoi(optarg);
-
-	// 		case 't':
-	// 			args.tweenFrame = atoi(optarg);
-	// 	}
-	// }
-	FILE *rleFile = fopen(argv[1], "r");
-
+	FILE *rleFile = fopen(args.video, "r");
 	if(rleFile == NULL){
 		fprintf(stderr, "the file doesnt exist.");
 		return false;
@@ -150,27 +171,42 @@ int main(int argc, char *argv[]){
 
 	int decoderesult = 0;
 	int filecount = 0;
+	// an array to hold frames if tweening (only 2 frames!)
+	Frame *twoArray[2] = {NULL, NULL};
 	while((decoderesult = packbitDecode(rleFile, &frame)) != 0){
-		if (args.prefix == NULL) {
-			writeFile(&frame, stdout);
-			fprintf(stdout, "%d", -1);
-		} else {
-			//allocate the momery of '-0000.ppm' and name of the prefix
-			char *filename = malloc(sizeof(char) * (4+4+1+strlen(args.prefix))); 
-			sprintf(filename, "%s-%04d.ppm",args.prefix, filecount); // generate filename 
-			FILE *outputfile = fopen(filename, "wb"); //write to output file
-			writeFile(&frame, outputfile);
-			free(filename);
-			free(frame.framedata);
-			filecount++;
-		}
+		// if tweening
+		if (args.tweenfactor > 0){
+			//copy the frame to temp
+			Frame *temp = malloc(sizeof(Frame));
+			temp->height = frame.height;
+			temp->width = frame.width;
+			size_t pixels = frame.height * frame.width;
+			temp->framedata = malloc(sizeof(char) * pixels * 3);
+			memcpy((void *)temp->framedata, (void *)frame.framedata, pixels * 3);
 
+			if (filecount == 0){
+				twoArray[0] = temp;
+			} else if(filecount > 0){
+				twoArray[1] = temp;
+				Frame **tFrames = tweenFrame(twoArray[0],twoArray[1], args.tweenfactor);// if it's not the first frame, then generate the tweenFrames
+				for(int i = 0; i<args.tweenfactor; i++){ // write the tween frames
+					writeToFile(filecount++, args.prefix, tFrames[i]);
+				}
+				free(twoArray[0]);
+				twoArray[0] = temp;
+			}
+		}
+		writeToFile(filecount++, args.prefix, &frame);
+	}
+
+	free(frame.framedata);
+	if (twoArray[0] != NULL) {
+		free(twoArray[0]);
 	}
 
 	fclose(rleFile);
 
 	return 0;
 }
-
 
 

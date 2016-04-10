@@ -1,13 +1,7 @@
 #ifndef DECODE_H
 #define DECODE_H
 
-typedef struct Arguments{
-	char *video;
-	char *prefix;
-	int scaleNumber;
-	int tweenFrame;
-
-} Arguments;
+#include "arguments/arguments.h"
 
 typedef struct Frame{
 	int height;
