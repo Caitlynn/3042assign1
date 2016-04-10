@@ -1,5 +1,6 @@
 #include "rledecode.h"
 #include "arguments/arguments.h"
+#include "tween/tweening.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -72,24 +73,7 @@ int packbitDecode(FILE *file, Frame *frame){
 	return true;
 }
 
-Frame** tweenFrame(Frame *frame1, Frame *frame2, int tweenfactor){
-	int pixels = frame1->width * frame1->height;
-	Frame **newframes = malloc(sizeof(Frame *) * tweenfactor); // create a list of frame pointers
-	for(int j = 0; j< tweenfactor; j++){
-		Frame *tFrame = malloc(sizeof(Frame));
-		tFrame->width = frame1->width;
-		tFrame->height = frame1->height;
-		tFrame->framedata = malloc(sizeof(char) * pixels * 3);
-		newframes[j] = tFrame;
-		for(size_t i=0; i<pixels; i++){
-			tFrame->framedata[i] = frame1->framedata[i] - ((int)frame1->framedata[i] - (int)frame2->framedata[i]) / (tweenfactor+1) * (j+1);
-			tFrame->framedata[i+pixels] = frame1->framedata[i+pixels] - ((int)frame1->framedata[i+pixels] - (int)frame2->framedata[i+pixels]) / (tweenfactor+1) * (j+1);
-			tFrame->framedata[i+2*pixels] = frame1->framedata[i+2*pixels] - ((int)frame1->framedata[i+2*pixels] - (int)frame2->framedata[i+2*pixels]) / (tweenfactor+1) * (j+1);
-		}
 
-	}
-	return newframes;
-}
 
 // int scaleImage(FILE *file, int scalefactor){
 // 	if (fsanf(file, "P6\n%d %d\n255\n", width, height) != 2) {
@@ -174,7 +158,6 @@ int main(int argc, char *argv[]){
 	// an array to hold frames if tweening (only 2 frames!)
 	Frame *twoArray[2] = {NULL, NULL};
 	while((decoderesult = packbitDecode(rleFile, &frame)) != 0){
-		// if tweening
 		if (args.tweenfactor > 0){
 			//copy the frame to temp
 			Frame *temp = malloc(sizeof(Frame));
@@ -184,18 +167,18 @@ int main(int argc, char *argv[]){
 			temp->framedata = malloc(sizeof(char) * pixels * 3);
 			memcpy((void *)temp->framedata, (void *)frame.framedata, pixels * 3);
 
-			if (filecount == 0){
-				twoArray[0] = temp;
-			} else if(filecount > 0){
-				twoArray[1] = temp;
-				Frame **tFrames = tweenFrame(twoArray[0],twoArray[1], args.tweenfactor);// if it's not the first frame, then generate the tweenFrames
-				for(int i = 0; i<args.tweenfactor; i++){ // write the tween frames
-					writeToFile(filecount++, args.prefix, tFrames[i]);
-				}
-				free(twoArray[0]);
-				twoArray[0] = temp;
+		if (filecount == 0){
+			twoArray[0] = temp;
+		} else if(filecount > 0){
+			twoArray[1] = temp;
+			Frame **tFrames = tweenFrame(twoArray[0],twoArray[1], args.tweenfactor);// if it's not the first frame, then generate the tweenFrames
+			for(int i = 0; i<args.tweenfactor; i++){ // write the tween frames
+				writeToFile(filecount++, args.prefix, tFrames[i]);
 			}
+			free(twoArray[0]);
+			twoArray[0] = temp;
 		}
+	}
 		writeToFile(filecount++, args.prefix, &frame);
 	}
 

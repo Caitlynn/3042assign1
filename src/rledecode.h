@@ -2,7 +2,6 @@
 #define DECODE_H
 
 #include "arguments/arguments.h"
-
 typedef struct Frame{
 	int height;
 	int width;
