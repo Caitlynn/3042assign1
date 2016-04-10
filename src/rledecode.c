@@ -1,4 +1,5 @@
 #include "rledecode.h"
+#include "headerDecode/headerDecode.h"
 #include "arguments/arguments.h"
 #include "packbitDecode/packbitDecode.h"
 #include "tween/tweening.h"
@@ -6,40 +7,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-/* this program decodes an rleplay file and produce a sequence of images in PPM format
-*/ 
-
-
-/*
-this function returns 1 if width and height are pos int,
-otherwise returns 0 and store width and height.
-*/
-int headerDecode(FILE *rleFile, Header *header){
-	//check if it's the end of the file
-	if (feof(rleFile)){
-		return false;
-	} else {
-		//get the width and the height
-		if (fscanf(rleFile, "RLEPLAYv1\n%d %d\n",&(header->width), &(header->height)) != 2) {
-			fprintf(stderr, "couldn't decode the header\n");
-			return false;
-		}
-	}
-	//handle incorrect width and height
-	if (header->width < 1 || header->height < 1){
-		fprintf(stderr, "the width and height values are incorrect\n");
-		return false;
-	}
-	return true;
-}
-
 
 // int scaleImage(FILE *file, int scalefactor){
 // 	if (fsanf(file, "P6\n%d %d\n255\n", width, height) != 2) {
 // 		fprintf(stderr, "This is not a PPM file\n");
 // 	}
-
-
 // }
 
 /*write a frame to a file*/
