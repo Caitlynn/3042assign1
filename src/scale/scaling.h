@@ -1,6 +1,13 @@
 #ifndef SCALE_H
 #define SCALE_H
 
-int scaleImage(FILE *file, int scalefactor);
+#include "../rledecode.h"
+typedef struct Pixel{
+	unsigned char red;
+	unsigned char green;
+	unsigned char blue;
+} Pixel;
+
+int scaleImage(Frame *frame, int scalefactor);
 
 #endif

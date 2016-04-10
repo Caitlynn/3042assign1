@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "arguments.h"
 
+/*this function validate the arguments and decide the actions of the arguments*/
 int validateArguments(Arguments *args, int argc, char **argv) {
 	if (argc < 3 || argc > 7){
 		fprintf(stderr, "Please enter correct arugments\n");
@@ -21,9 +22,9 @@ int validateArguments(Arguments *args, int argc, char **argv) {
 	fclose(file);
 
 	if(strncmp(argv[2],"-",1) ==0){
-		args->prefix = NULL;
+		args->prefix = NULL; //if it's a string, set prefix to null
 	} else {
-		args->prefix = argv[2];
+		args->prefix = argv[2]; //otherwise use the prefix name
 	}
 
 	const struct option long_options[] = {
@@ -37,7 +38,7 @@ int validateArguments(Arguments *args, int argc, char **argv) {
 		switch(arg){
 			//do this cases only if you need it
 			case 's':
-				args->scalefactor = atoi(optarg);
+				args->scalefactor = atoi(optarg); //cast the argument to int and set scalefactor to the int
 				break;
 			case 't':
 				args->tweenfactor = atoi(optarg);

@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-
+/*this function takes a file and an empty struct frame to decode the file and fill out the data of the frame*/
 int packbitDecode(FILE *file, Frame *frame){
 	// get the first element of the file and check it's the end of the file or 'K'
 	char seperator = fgetc(file);

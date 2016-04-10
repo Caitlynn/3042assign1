@@ -3,16 +3,12 @@
 #include "arguments/arguments.h"
 #include "packbitDecode/packbitDecode.h"
 #include "tween/tweening.h"
+#include "scale/scaling.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-// int scaleImage(FILE *file, int scalefactor){
-// 	if (fsanf(file, "P6\n%d %d\n255\n", width, height) != 2) {
-// 		fprintf(stderr, "This is not a PPM file\n");
-// 	}
-// }
 
 /*write a frame to a file*/
 int writeFile(Frame *frame, FILE *framefile){
@@ -33,7 +29,7 @@ int writeFile(Frame *frame, FILE *framefile){
 }
 
 
-
+/*write the frames into output files or stdout in Terminal*/
 void writeToFile(int filecount, char *prefix, Frame *frame){
 	if (prefix == NULL) {
 			writeFile(frame, stdout);
@@ -52,17 +48,16 @@ void writeToFile(int filecount, char *prefix, Frame *frame){
 
 
 int main(int argc, char *argv[]){
-	//validate arguments numbers
 	Arguments args = {
 		.video = NULL,
 		.scalefactor = 0,
 		.tweenfactor = 0
-	};
+	}; 
 	if (!validateArguments(&args, argc, argv)) { // pass in the program arguments and fillout the Arguments struct
 		return 1;
 	}
 
-	FILE *rleFile = fopen(args.video, "r");
+	FILE *rleFile = fopen(args.video, "r"); //open the rle File
 	if(rleFile == NULL){
 		fprintf(stderr, "the file doesnt exist.");
 		return false;
@@ -73,7 +68,7 @@ int main(int argc, char *argv[]){
 		.height = 0
 	};
 
-	int result = headerDecode(rleFile, &rleFileHeader);
+	int result = headerDecode(rleFile, &rleFileHeader); //decode the header
 	if (!result) {
 		return 1;
 	}
@@ -86,9 +81,15 @@ int main(int argc, char *argv[]){
 
 	int decoderesult = 0;
 	int filecount = 0;
-	// an array to hold frames if tweening (only 2 frames!)
+	// an array of 2 frames to hold frames if tweening
 	Frame *twoArray[2] = {NULL, NULL};
 	while((decoderesult = packbitDecode(rleFile, &frame)) != 0){
+		if (args.scalefactor > 0) {
+			//scale the frame
+			if (!scaleImage(&frame, args.scalefactor)) {
+				return 1;
+			}
+		}
 		if (args.tweenfactor > 0){
 			//copy the frame to temp
 			Frame *temp = malloc(sizeof(Frame));
@@ -98,19 +99,21 @@ int main(int argc, char *argv[]){
 			temp->framedata = malloc(sizeof(char) * pixels * 3);
 			memcpy((void *)temp->framedata, (void *)frame.framedata, pixels * 3);
 
-		if (filecount == 0){
+		if (filecount == 0){ //if this is the first frame then put the copy in the first position and do nothing
 			twoArray[0] = temp;
 		} else if(filecount > 0){
+			//put the new frame in the second place
 			twoArray[1] = temp;
 			Frame **tFrames = tweenFrame(twoArray[0],twoArray[1], args.tweenfactor);// if it's not the first frame, then generate the tweenFrames
 			for(int i = 0; i<args.tweenfactor; i++){ // write the tween frames
 				writeToFile(filecount++, args.prefix, tFrames[i]);
 			}
 			free(twoArray[0]);
+			//swap the second frame to the first position
 			twoArray[0] = temp;
 		}
 	}
-		writeToFile(filecount++, args.prefix, &frame);
+		writeToFile(filecount++, args.prefix, &frame); // write the normal frame
 	}
 
 	free(frame.framedata);
