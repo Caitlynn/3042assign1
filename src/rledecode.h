@@ -13,5 +13,4 @@ typedef struct Header{
 	int height;
 } Header;
 
-
 #endif 
