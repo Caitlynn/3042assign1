@@ -1,7 +1,8 @@
 program=rledecode
-flags=-Wall
+flags=-Wall -std=c99
 src=$(shell find src -name "*.c")
 obj=$(src:.c=.o)
+
 
 all: $(program)
 

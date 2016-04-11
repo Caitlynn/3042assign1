@@ -3,10 +3,13 @@
 
 #include "tweening.h"
 
+
+/*this function return list of frames that are generated between the two input frames to smooth the video*/
+
 Frame** tweenFrame(Frame *frame1, Frame *frame2, int tweenfactor){
 	int pixels = frame1->width * frame1->height;
 	Frame **newframes = malloc(sizeof(Frame *) * tweenfactor); // create a list of frame pointers
-	for(int j = 0; j< tweenfactor; j++){
+	for(int j = 0; j< tweenfactor; j++){ //generate the number of tweenfactor of tFrames between each pair of frames
 		Frame *tFrame = malloc(sizeof(Frame));
 		tFrame->width = frame1->width;
 		tFrame->height = frame1->height;
