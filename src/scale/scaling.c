@@ -44,32 +44,32 @@ int scaleImage(Frame *frame, int scalefactor){
 	
 	//interpolate the rows
 	for(int t = 0; t < row; t++){
-		for(int j = 0; j < bitmap->width - col - 1; j++){
-			Pixel originalp = getPixel(frame,t, j);
-			Pixel scaledp = getPixel(bitmap, t*scalefactor, j*scalefactor);
+		for(int j = 0; j < scalefactor - 1; j++){
+			Pixel firstp = getPixel(frame,t, j);
+			Pixel secondp = getPixel(frame,t, j + 1);
 			for(int i = 0; i < scalefactor - 1; i++){
 				Pixel newp = {
-					.red = originalp.red + (((int)scaledp.red - (int)originalp.red)/scalefactor) * (i + 1),
-					.green = originalp.green + (((int)scaledp.green - (int)originalp.green)/scalefactor) * (i + 1),
-					.blue = originalp.blue + (((int)scaledp.blue - (int)originalp.blue)/scalefactor) * (i + 1)
+					.red = firstp.red + (((int)secondp.red - (int)firstp.red)/scalefactor) * (i + 1),
+					.green = firstp.green + (((int)secondp.green - (int)firstp.green)/scalefactor) * (i + 1),
+					.blue = firstp.blue + (((int)secondp.blue - (int)firstp.blue)/scalefactor) * (i + 1)
 				};
-				setPixel(bitmap, newp, t, j + i + 1);
+				setPixel(bitmap, newp, t*scalefactor, j*scalefactor + i + 1);
 			}	
 		}
 	}
 
 	//interpolate the columns
 	for(int t = 0; t < col; t++){
-		for(int j = 0; j < bitmap->height - row - 1; j++){
-			Pixel originalp = getPixel(frame,j, t);
-			Pixel scaledp = getPixel(bitmap, j*scalefactor, t*scalefactor);
+		for(int j = 0; j < scalefactor - 1; j++){
+			Pixel firstp = getPixel(frame,j, t);
+			Pixel secondp = getPixel(frame,j + 1, t);
 			for(int i = 0; i < scalefactor - 1; i++){
 				Pixel newp = {
-					.red = originalp.red + (((int)scaledp.red - (int)originalp.red)/scalefactor) * (i + 1),
-					.green = originalp.green + (((int)scaledp.green - (int)originalp.green)/scalefactor) * (i + 1),
-					.blue = originalp.blue + (((int)scaledp.blue - (int)originalp.blue)/scalefactor) * (i + 1)
+					.red = firstp.red + (((int)secondp.red - (int)firstp.red)/scalefactor) * (i + 1),
+					.green = firstp.green + (((int)secondp.green - (int)firstp.green)/scalefactor) * (i + 1),
+					.blue = firstp.blue + (((int)secondp.blue - (int)firstp.blue)/scalefactor) * (i + 1)
 				};
-				setPixel(bitmap, newp, j + i + 1, t);
+				setPixel(bitmap, newp, j*scalefactor + i + 1, t*scalefactor);
 			}	
 		}
 	}
