@@ -114,6 +114,8 @@ int main(int argc, char *argv[]){
 		}
 	}
 		writeToFile(filecount++, args.prefix, &frame); // write the normal frame
+		frame.height = rleFileHeader.height;
+		frame.width = rleFileHeader.width;
 	}
 
 	free(frame.framedata);

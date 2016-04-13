@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 /*this function returns a Pixel of the input coordinate on a frame*/
-Pixel getPixel(Frame *frame, int row, int col){
+Pixel getPixel(Frame *frame, unsigned int row, unsigned int col){
 	size_t frameoffset = frame->width * frame->height;
 	size_t gridoffset = col + row * frame->width;
 	Pixel pixel = {
@@ -16,7 +16,7 @@ Pixel getPixel(Frame *frame, int row, int col){
 }
 
 /*this function takes a bitmap(frame), and a coordinate of a pixel, and place the pixel in the bitmap*/
-void setPixel(Frame *bitmap, Pixel pixel, int row, int col){
+void setPixel(Frame *bitmap, Pixel pixel, unsigned int row, unsigned int col){
 	size_t bitmapoffset = bitmap->width * bitmap->height;
 	size_t gridoffset = col + row * bitmap->width;
 	bitmap->framedata[gridoffset] = pixel.red;
@@ -43,11 +43,11 @@ int scaleImage(Frame *frame, int scalefactor){
 	}
 	
 	//interpolate the rows
-	for(int t = 0; t < row; t++){
-		for(int j = 0; j < scalefactor - 1; j++){
+	for(unsigned int t = 0; t < row; t++){
+		for(unsigned int j = 0; j < col - 1; j++){
 			Pixel firstp = getPixel(frame,t, j);
 			Pixel secondp = getPixel(frame,t, j + 1);
-			for(int i = 0; i < scalefactor - 1; i++){
+			for(unsigned int i = 0; i < scalefactor - 1; i++){
 				Pixel newp = {
 					.red = firstp.red + (((int)secondp.red - (int)firstp.red)/scalefactor) * (i + 1),
 					.green = firstp.green + (((int)secondp.green - (int)firstp.green)/scalefactor) * (i + 1),
@@ -59,11 +59,11 @@ int scaleImage(Frame *frame, int scalefactor){
 	}
 
 	//interpolate the columns
-	for(int t = 0; t < col; t++){
-		for(int j = 0; j < scalefactor - 1; j++){
+	for(unsigned int t = 0; t < col; t++){
+		for(unsigned int j = 0; j < row - 1; j++){
 			Pixel firstp = getPixel(frame,j, t);
 			Pixel secondp = getPixel(frame,j + 1, t);
-			for(int i = 0; i < scalefactor - 1; i++){
+			for(unsigned int i = 0; i < scalefactor - 1; i++){
 				Pixel newp = {
 					.red = firstp.red + (((int)secondp.red - (int)firstp.red)/scalefactor) * (i + 1),
 					.green = firstp.green + (((int)secondp.green - (int)firstp.green)/scalefactor) * (i + 1),
