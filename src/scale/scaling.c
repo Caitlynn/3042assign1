@@ -59,17 +59,17 @@ int scaleImage(Frame *frame, int scalefactor){
 	}
 
 	//interpolate the columns
-	for(unsigned int t = 0; t < col; t++){
-		for(unsigned int j = 0; j < row - 1; j++){
-			Pixel firstp = getPixel(frame,j, t);
-			Pixel secondp = getPixel(frame,j + 1, t);
+	for(unsigned int t = 0; t < bitmap->width; t++){
+		for(unsigned int j = 0; j < frame->height - 1; j++){
+			Pixel firstp = getPixel(bitmap,j*scalefactor, t);
+			Pixel secondp = getPixel(bitmap,j*scalefactor + scalefactor, t);
 			for(unsigned int i = 0; i < scalefactor - 1; i++){
-				Pixel newp = {
+				Pixel newp = { 
 					.red = firstp.red + (((int)secondp.red - (int)firstp.red)/scalefactor) * (i + 1),
 					.green = firstp.green + (((int)secondp.green - (int)firstp.green)/scalefactor) * (i + 1),
 					.blue = firstp.blue + (((int)secondp.blue - (int)firstp.blue)/scalefactor) * (i + 1)
 				};
-				setPixel(bitmap, newp, j*scalefactor + i + 1, t*scalefactor);
+				setPixel(bitmap, newp, j*scalefactor + i + 1, t);
 			}	
 		}
 	}
