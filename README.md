@@ -34,9 +34,6 @@
 			Example: rledecode sonic.rle sonic --scale 2
 			Explanation: this will output a bunch of ppm files that are scaled by 2
 
-### Known bugs or limitations
-Haven't implemented Scale function.
-Only have enabled scale option in argument.
 
 ### Notes
 	* if --tween factor is too large you could run out of memory
