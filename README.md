@@ -1,6 +1,6 @@
 # rledecode
 ## Author and Create time
-	Tian Zhou 25224921
+	Tian Zhou
 	28 March 2016
 
 
